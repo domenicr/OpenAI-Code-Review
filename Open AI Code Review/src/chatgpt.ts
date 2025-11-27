@@ -15,29 +15,31 @@ export class ChatGPT {
         - Do not highlight minor issues and nitpicks.
         - Only provide instructions for improvements 
         - If you have no instructions respond with NO_COMMENT only, otherwise provide your instructions.
-    
+        
         You are provided with the code changes (diffs) in a unidiff format.
         
-        The response should be in markdown format.`
+    //     The response should be in markdown format.`
     }
 
     public async PerformCodeReview(diff: string, fileName: string): Promise<string> {
 
-        let model = tl.getInput('ai_model', true) as | (string & {})
-            | 'gpt-4-1106-preview'
-            | 'gpt-4-vision-preview'
-            | 'gpt-4'
-            | 'gpt-4-0314'
-            | 'gpt-4-0613'
-            | 'gpt-4-32k'
-            | 'gpt-4-32k-0314'
-            | 'gpt-4-32k-0613'
-            | 'gpt-3.5-turbo-1106'
-            | 'gpt-3.5-turbo'
-            | 'gpt-3.5-turbo-16k'
-            | 'gpt-3.5-turbo-0301'
-            | 'gpt-3.5-turbo-0613'
-            | 'gpt-3.5-turbo-16k-0613';
+        // let model = tl.getInput('ai_model', true) as | (string & {})
+        //     | 'gpt-4-1106-preview'
+        //     | 'gpt-4-vision-preview'
+        //     | 'gpt-4'
+        //     | 'gpt-4-0314'
+        //     | 'gpt-4-0613'
+        //     | 'gpt-4-32k'
+        //     | 'gpt-4-32k-0314'
+        //     | 'gpt-4-32k-0613'
+        //     | 'gpt-3.5-turbo-1106'
+        //     | 'gpt-3.5-turbo'
+        //     | 'gpt-3.5-turbo-16k'
+        //     | 'gpt-3.5-turbo-0301'
+        //     | 'gpt-3.5-turbo-0613'
+        //     | 'gpt-3.5-turbo-16k-0613';
+
+        let model = tl.getInput('ai_model', true) as | (string & {});
 
         if (!this.doesMessageExceedTokenLimit(diff + this.systemMessage, 4097)) {
             let openAi = await this._openAi.chat.completions.create({
@@ -56,7 +58,8 @@ export class ChatGPT {
             let response = openAi.choices;
 
             if (response.length > 0) {
-                return response[0].message.content!;
+                let content = response[0].message.content!;
+                return this.stripMarkdown(content);
             }
         }
 
@@ -67,6 +70,17 @@ export class ChatGPT {
     private doesMessageExceedTokenLimit(message: string, tokenLimit: number): boolean {
         let tokens = encode(message);
         return tokens.length > tokenLimit;
+    }
+
+    private stripMarkdown(text: string): string {
+        // Extract JSON from markdown code blocks
+        const jsonMatch = text.match(/```json\s*\n([\s\S]*?)\n```/);
+        if (jsonMatch) {
+            return jsonMatch[1].trim();
+        }
+        
+        // If no markdown code block, return as is
+        return text.trim();
     }
 
 }
