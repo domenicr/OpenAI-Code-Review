@@ -26,71 +26,27 @@ export class Repository {
         let diffs = await this._repository.diff([targetBranch + '...' + sourceBranch, '--name-only', '--diff-filter=AM']);
         let files = diffs.split('\n').filter(line => line.trim().length > 0);
 
-        console.info(`Files in the diff: ${files}`);
+        console.info(`Files to review: ${files}`);
 
-        // Helper function to extract file extension
-        const getFileExtension = (file: string): string => {
-            const lastDotIndex = file.lastIndexOf(".");
-            return lastDotIndex === -1 ? "" : file.slice(lastDotIndex + 1);
-        };
+        let filesToReview = files.filter(file => !binaryExtensions.includes(file.slice((file.lastIndexOf(".") - 1 >>> 0) + 2)));
 
-        // Utility function for file pattern matching
-        const matchesPattern = (file: string, patterns: string[]): boolean => {
-            const fileName = file.split('/').pop()!;
-            const fileExt = file.substring(file.lastIndexOf('.'));
-            return patterns.some(pattern => {
-                // Exact file name match
-                if (pattern === fileName) return true;
-
-                // Extension match (e.g., ".ts", ".js")
-                if (pattern.startsWith('.') && pattern === fileExt) return true;
-
-                // Wildcard patterns
-                const regexPattern = pattern
-                    .replace(/\./g, '\\.')
-                    .replace(/\*/g, '.*')
-                    .replace(/\?/g, '.');
-
-                return new RegExp(`^${regexPattern}$`).test(fileName);
-            });
-        };
-
-        // Start with non-binary files
-        let filesToReviewNoBin = files.filter(file => !binaryExtensions.includes(getFileExtension(file)));
-        // Log differences between all files and filtered files if any filtering occurred
-        if (files.length !== filesToReviewNoBin.length) {
-            const filteredOutFilesNoBin = files.filter(file => !filesToReviewNoBin.includes(file));
-            console.info(`Binary files filtered out: ${filteredOutFilesNoBin}`);
+        if(fileExtensions) {
+            let fileExtensionsToInclude = fileExtensions.trim().split(',');
+            filesToReview = filesToReview.filter(file => fileExtensionsToInclude.includes(file.substring(file.lastIndexOf('.'))));
         }
 
-        let filesToReview = filesToReviewNoBin;
-        // Exclude files matching filesToExclude pattern, except those in fileExtensions
-        if (filesToExclude) {
-            let excludePatterns = filesToExclude.trim().split(',').map(p => p.trim());
-            let includePatterns = fileExtensions ? fileExtensions.trim().split(',').map(p => p.trim()) : [];
-            
-            filesToReview = filesToReviewNoBin.filter(file => {
-                const matchesExclude = matchesPattern(file, excludePatterns);
-                const matchesInclude = includePatterns.length > 0 && matchesPattern(file, includePatterns);
-                
-                // Exclude if matches exclude pattern, unless it also matches include pattern
-                return !matchesExclude || matchesInclude;
-            });
-
-                // Log differences between all files and filtered files if any filtering occurred
-            if (files.length !== filesToReview.length) {
-                const filteredOutFiles = files.filter(file => !filesToReview.includes(file));
-                console.info(`Excluded files filtered out: ${filteredOutFiles}`);
-            }
+        if(filesToExclude) {
+            let fileNamesToExclude = filesToExclude.trim().split(',')
+            filesToReview = filesToReview.filter(file => !fileNamesToExclude.includes(file.split('/').pop()!.trim()))
         }
 
         return filesToReview;
     }
 
-    public async GetDiff(fileName: string, diffScopeLines: number = 3): Promise<string> {
+    public async GetDiff(fileName: string): Promise<string> {
         let targetBranch = this.GetTargetBranch();
-                
-        let diff = await this._repository.diff([targetBranch, '--', fileName, `-U${diffScopeLines}`]);
+        
+        let diff = await this._repository.diff([targetBranch, '--', fileName]);
 
         return diff;
     }
