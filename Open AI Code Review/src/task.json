@@ -1,15 +1,15 @@
 {
     "$schema": "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/master/tasks.schema.json",
-    "id": "7d8f9424-ffc1-47f2-af59-43289774f871",
-    "name": "ArielEASCodeReview",
-    "friendlyName": "Ariel EAS Code Review",
+    "id": "7d8f9424-ffc1-47f2-af59-43289774f872",
+    "name": "ArielEASCodeReview-sandbox",
+    "friendlyName": "Ariel EAS Code Review-sandbox",
     "description": "Complete a Code Review using Fuel iX",
     "category": "Utility",
     "author": "Domenico Rico",
     "version": {
-        "Major": 2,
+        "Major": 1,
         "Minor": 0,
-        "Patch": 0
+        "Patch": 10
     },
     "instanceNameFormat": " Fuel iX Code Review-sandbox $(message)",
     "inputs": [

@@ -58,7 +58,7 @@ export class Main {
                 review.trim().length > 0 &&
                 review.indexOf('NO_COMMENT') < 0
             ) {
-                await this._pullRequest.AddComment(fileToReview, review);
+                await this._pullRequest.ApplyCodeReview(review, fileToReview);
             }
 
             console.info(`Completed review of file ${fileToReview}`)
